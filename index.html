@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chuyển Đổi Ảnh Theo Chủ Đề AI - Gemini</title>
+    <!-- Tải Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Cấu hình Tailwind cho font Inter và màu sắc -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': '#4F46E5', // Indigo
+                        'secondary': '#10B981', // Emerald
+                        'background': '#F9FAFB', // Light Gray background
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
+        /* Ẩn input file mặc định và tùy chỉnh button */
+        #fileInput {
+            display: none;
+        }
+
+        /* Tùy chỉnh thanh cuộn cho khu vực hiển thị ảnh (tùy chọn) */
+        .image-container {
+            min-height: 256px;
+        }
+    </style>
+</head>
+
+<body class="bg-background min-h-screen font-sans antialiased p-4 sm:p-8">
+
+    <!-- Container Chính -->
+    <div class="max-w-4xl mx-auto bg-white shadow-2xl rounded-xl p-6 sm:p-10">
+
+        <!-- Tiêu đề và Hướng dẫn -->
+        <header class="text-center mb-10">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2">
+                🎨 Biến Đổi Ảnh Của Bạn Với AI
+            </h1>
+            <p class="text-gray-600 text-lg">
+                Tải lên ảnh và chọn chủ đề. Gemini AI sẽ tạo ra một tác phẩm nghệ thuật mới!
+            </p>
+        </header>
+
+        <!-- Khu vực 1: Tải ảnh và Lựa chọn chủ đề -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+
+            <!-- Tải ảnh lên -->
+            <div
+                class="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center space-y-4 hover:border-primary transition duration-300">
+                <label for="fileInput"
+                    class="cursor-pointer bg-primary text-white py-3 px-6 rounded-full font-semibold shadow-lg hover:bg-indigo-600 transition duration-300">
+                    Chọn Ảnh Tải Lên
+                </label>
+                <input type="file" id="fileInput" accept="image/*" onchange="previewImage(event)">
+                <p class="text-sm text-gray-500">Tải lên ảnh định dạng JPG hoặc PNG.</p>
+
+                <!-- Xem trước ảnh gốc -->
+                <div id="originalImageContainer"
+                    class="mt-4 w-full max-h-64 overflow-hidden rounded-lg border border-gray-200"
+                    style="display: none;">
+                    <img id="originalImage" class="w-full h-auto object-contain max-h-64" alt="Ảnh gốc">
+                </div>
+            </div>
+
+            <!-- Lựa chọn chủ đề -->
+            <div class="space-y-4">
+                <label for="themeSelector" class="block text-xl font-bold text-gray-800">2. Chọn Chủ Đề Biến
+                    Đổi:</label>
+                <select id="themeSelector"
+                    class="w-full p-3 border-2 border-gray-300 rounded-lg focus:ring-primary focus:border-primary transition duration-300 text-gray-700 bg-white shadow-sm">
+                    <option value="" disabled selected>-- Chọn một phong cách --</option>
+                    <option
+                        value="Biến đổi hoàn toàn thành phong cách Giáng Sinh ấm áp, đầy tuyết và ánh đèn lung linh.">
+                        Giáng Sinh 🎄</option>
+                    <option
+                        value="Biến đổi hoàn toàn thành phong cách Halloween ma quái, rùng rợn với bí ngô và màu tối.">
+                        Halloween 🎃</option>
+                    <option
+                        value="Biến đổi hoàn toàn thành phong cách Tết Nguyên Đán rực rỡ, với hoa mai, hoa đào, và không khí lễ hội truyền thống.">
+                        Tết Nguyên Đán 🧧</option>
+                    <option
+                        value="Biến đổi hoàn toàn thành phong cách Lễ hội Mùa Hè rực rỡ, đầy màu sắc, pháo hoa và âm nhạc.">
+                        Lễ hội Mùa Hè 🎆</option>
+                    <option
+                        value="Biến đổi hoàn toàn thành một bức tranh phong cảnh Mùa Thu lãng mạn, với lá vàng, lá đỏ.">
+                        Phong cảnh Mùa Thu 🍂</option>
+                    <option
+                        value="Biến đổi hoàn toàn thành một bức tranh phong cảnh Mùa Xuân tươi mới, với cây cối đâm chồi nảy lộc và hoa nở.">
+                        Phong cảnh Mùa Xuân 🌸</option>
+                    <option
+                        value="Biến đổi hoàn toàn thành phong cách thiệp Chúc Mừng Sinh Nhật, vui tươi và đầy quà tặng.">
+                        Sinh Nhật 🎂</option>
+                    <option
+                        value="Biến đổi hoàn toàn thành phong cách tranh sơn dầu trừu tượng, đầy màu sắc và đường nét mạnh mẽ.">
+                        Tranh Sơn Dầu Trừu Tượng 🎨</option>
+                    <option
+                        value="Biến đổi hoàn toàn thành phong cách hoạt hình Nhật Bản (Anime) lãng mạn, với màu sắc tươi sáng và mắt to.">
+                        Phong cách Anime 🎌</option>
+                </select>
+
+                <!-- Nút Xử lý -->
+                <button id="generateButton" onclick="generateTransformedImage()" disabled
+                    class="w-full py-4 px-6 bg-secondary text-white font-bold rounded-xl shadow-xl hover:bg-emerald-600 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2">
+                    <svg id="generateIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M11.05 15.54L10 13l-1.05 2.54M21 12a9 9 0 11-18 0 9 9 0 0118 0zM12 21a9 9 0 01-9-9 9 9 0 019-9 9 9 0 019 9 9 9 0 01-9 9zM12 12h.01">
+                        </path>
+                    </svg>
+                    <span id="generateText">Tạo Ảnh Biến Đổi</span>
+                    <svg id="loadingSpinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style="display: none;">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Khu vực 2: Hiển thị kết quả và Tải về -->
+        <div class="border-t border-gray-200 pt-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">3. Kết Quả Biến Đổi</h2>
+
+            <!-- Hiển thị thông báo/loading -->
+            <div id="messageBox" class="text-center p-4 bg-blue-100 text-blue-800 rounded-lg mb-4"
+                style="display: none;">
+                Ảnh đã sẵn sàng.
+            </div>
+
+            <!-- Container cho ảnh kết quả -->
+            <div
+                class="image-container w-full bg-gray-100 rounded-lg flex items-center justify-center p-4 shadow-inner">
+                <img id="transformedImage" class="max-w-full h-auto max-h-96 rounded-lg shadow-xl" src=""
+                    alt="Ảnh đã chuyển đổi" style="display: none;">
+                <p id="placeholderText" class="text-gray-500 italic">
+                    Ảnh kết quả sẽ hiển thị ở đây sau khi bạn tạo.
+                </p>
+            </div>
+
+            <!-- Nút Tải về -->
+            <div class="text-center mt-6">
+                <button id="downloadButton" onclick="downloadImage()" disabled
+                    class="py-3 px-8 bg-primary text-white font-bold rounded-full shadow-lg hover:bg-indigo-600 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                    Tải Ảnh Về
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        // Khai báo biến toàn cục từ môi trường Canvas (BẮT BUỘC)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const apiKey = ""; // API key được cung cấp tự động bởi Canvas
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
+
+        let base64Image = null;
+
+        // --- HÀM XỬ LÝ GIAO DIỆN VÀ FILE ---
+
+        /**
+         * Chuyển đổi file ảnh đã chọn thành Base64 để gửi lên API.
+         * @param {Event} event Sự kiện thay đổi của input file.
+         */
+        window.previewImage = function (event) {
+            const file = event.target.files[0];
+            const originalImage = document.getElementById('originalImage');
+            const originalImageContainer = document.getElementById('originalImageContainer');
+            const generateButton = document.getElementById('generateButton');
+
+            base64Image = null; // Reset Base64
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    // Cập nhật ảnh xem trước
+                    originalImage.src = e.target.result;
+                    originalImageContainer.style.display = 'block';
+
+                    // Lấy phần Base64 data (sau dấu phẩy)
+                    const base64Data = e.target.result.split(',')[1];
+                    const mimeType = file.type;
+
+                    if (base64Data) {
+                        base64Image = {
+                            mimeType: mimeType,
+                            data: base64Data
+                        };
+                        // Kích hoạt nút tạo ảnh nếu đã có ảnh và đã chọn chủ đề
+                        checkReadyToGenerate();
+                    } else {
+                        showMessage("Lỗi: Không thể đọc dữ liệu ảnh Base64.", 'bg-red-100 text-red-800');
+                        generateButton.disabled = true;
+                    }
+                };
+                reader.readAsDataURL(file);
+            } else {
+                originalImage.src = '';
+                originalImageContainer.style.display = 'none';
+                generateButton.disabled = true;
+            }
+        };
+
+        // Lắng nghe sự kiện thay đổi của selector để kích hoạt nút tạo ảnh
+        document.getElementById('themeSelector').addEventListener('change', checkReadyToGenerate);
+
+        /**
+         * Kiểm tra điều kiện để kích hoạt nút tạo ảnh.
+         */
+        function checkReadyToGenerate() {
+            const theme = document.getElementById('themeSelector').value;
+            const generateButton = document.getElementById('generateButton');
+            if (base64Image && theme) {
+                generateButton.disabled = false;
+            } else {
+                generateButton.disabled = true;
+            }
+        }
+
+        /**
+         * Hiển thị thông báo.
+         * @param {string} message Nội dung thông báo.
+         * @param {string} classes Lớp CSS cho màu sắc/nền.
+         */
+        function showMessage(message, classes = 'bg-blue-100 text-blue-800') {
+            const box = document.getElementById('messageBox');
+            box.textContent = message;
+            box.className = `text-center p-4 rounded-lg mb-4 ${classes}`;
+            box.style.display = 'block';
+        }
+
+        /**
+         * Cập nhật trạng thái loading.
+         * @param {boolean} isLoading Trạng thái loading (true/false).
+         */
+        function setLoading(isLoading) {
+            const generateButton = document.getElementById('generateButton');
+            const generateText = document.getElementById('generateText');
+            const generateIcon = document.getElementById('generateIcon');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+
+            generateButton.disabled = isLoading;
+            if (isLoading) {
+                generateText.textContent = 'Đang Xử Lý...';
+                generateIcon.style.display = 'none';
+                loadingSpinner.style.display = 'inline-block';
+                generateButton.classList.remove('bg-secondary', 'hover:bg-emerald-600');
+                generateButton.classList.add('bg-gray-500');
+                showMessage("Đang gửi yêu cầu đến AI để tạo ảnh. Quá trình này có thể mất vài giây...", 'bg-yellow-100 text-yellow-800');
+            } else {
+                generateText.textContent = 'Tạo Ảnh Biến Đổi';
+                generateIcon.style.display = 'inline-block';
+                loadingSpinner.style.display = 'none';
+                generateButton.classList.add('bg-secondary', 'hover:bg-emerald-600');
+                generateButton.classList.remove('bg-gray-500');
+            }
+        }
+
+        // --- HÀM GỌI API GEMINI ---
+
+        /**
+         * Thực hiện cuộc gọi API để chuyển đổi ảnh.
+         */
+        window.generateTransformedImage = async function () {
+            if (!base64Image) {
+                showMessage("Vui lòng tải lên một ảnh trước.", 'bg-red-100 text-red-800');
+                return;
+            }
+
+            const themePrompt = document.getElementById('themeSelector').value;
+            if (!themePrompt) {
+                showMessage("Vui lòng chọn một chủ đề biến đổi.", 'bg-red-100 text-red-800');
+                return;
+            }
+
+            setLoading(true);
+            document.getElementById('downloadButton').disabled = true;
+            document.getElementById('transformedImage').style.display = 'none';
+            document.getElementById('placeholderText').style.display = 'block';
+
+            // Xây dựng prompt để hướng dẫn mô hình AI chuyển đổi ảnh
+            const userPrompt = `Dựa trên ảnh đã cung cấp, hãy biến đổi ảnh ĐẦY ĐỦ và HOÀN TOÀN thành phong cách sau. ${themePrompt}. Đảm bảo chất lượng nghệ thuật cao, chi tiết, và giữ lại bố cục tổng thể của ảnh gốc nhưng áp dụng triệt để phong cách mới.`;
+
+            const payload = {
+                contents: [{
+                    parts: [
+                        { text: userPrompt }, // Prompt mô tả việc chuyển đổi
+                        { inlineData: base64Image } // Dữ liệu ảnh đầu vào
+                    ]
+                }],
+                generationConfig: {
+                    responseModalities: ['TEXT', 'IMAGE'] // Yêu cầu trả về cả văn bản (mặc định) và hình ảnh
+                },
+                // Model: gemini-2.5-flash-image-preview
+            };
+
+            // Hàm retry với exponential backoff
+            const maxRetries = 3;
+            let lastError = null;
+
+            for (let attempt = 0; attempt < maxRetries; attempt++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        // FIX: Loại bỏ ký tự escape không cần thiết trong template literal
+                        throw new Error(`Lỗi HTTP: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+
+                    const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+
+                    if (base64Data) {
+                        // FIX: Loại bỏ ký tự escape không cần thiết trong template literal
+                        const imageUrl = `data:image/png;base64,${base64Data}`;
+                        const transformedImage = document.getElementById('transformedImage');
+
+                        // Hiển thị ảnh kết quả
+                        transformedImage.src = imageUrl;
+                        transformedImage.style.display = 'block';
+                        document.getElementById('placeholderText').style.display = 'none';
+                        document.getElementById('downloadButton').disabled = false;
+                        showMessage("✅ Chuyển đổi thành công! Ảnh đã sẵn sàng.", 'bg-green-100 text-green-800');
+                        break; // Thành công, thoát vòng lặp
+                    } else {
+                        // Trường hợp API trả về thành công nhưng không có ảnh (hiếm)
+                        throw new Error("API không trả về dữ liệu ảnh hợp lệ.");
+                    }
+
+                } catch (error) {
+                    lastError = error;
+                    console.error(`Thử lại lần ${attempt + 1} thất bại:`, error);
+                    if (attempt < maxRetries - 1) {
+                        const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    }
+                }
+            }
+
+            setLoading(false);
+
+            if (lastError && document.getElementById('transformedImage').style.display === 'none') {
+                // FIX: Loại bỏ ký tự escape không cần thiết trong template literal
+                showMessage(`Lỗi trong quá trình tạo ảnh. Vui lòng thử lại. Chi tiết: ${lastError.message || 'Không rõ lỗi.'}`, 'bg-red-100 text-red-800');
+            }
+        };
+
+        // --- HÀM TẢI ẢNH XUỐNG ---
+
+        /**
+         * Tải ảnh đã được chuyển đổi về máy.
+         */
+        window.downloadImage = function () {
+            const imageElement = document.getElementById('transformedImage');
+            const imageUrl = imageElement.src;
+
+            if (imageUrl && imageUrl !== '#') {
+                const link = document.createElement('a');
+                link.href = imageUrl;
+                // Đặt tên file tải về
+                link.download = 'anh-chuyen-doi-gemini.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                showMessage("Không có ảnh để tải về. Vui lòng tạo ảnh trước.", 'bg-red-100 text-red-800');
+            }
+        };
+    </script>
+</body>
+
+</html>
