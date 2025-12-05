@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nguyễn Hữu Duy</title>
+    <title>Nguyễn Hữu Duy - AI Image Transform</title>
     <!-- Tải Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Cấu hình Tailwind cho font Inter và màu sắc -->
@@ -36,6 +36,25 @@
         .image-container {
             min-height: 256px;
         }
+
+        /* Custom scrollbar */
+        .theme-select::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .theme-select::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .theme-select::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .theme-select::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
     </style>
 </head>
 
@@ -64,8 +83,8 @@
                     class="cursor-pointer bg-primary text-white py-3 px-6 rounded-full font-semibold shadow-lg hover:bg-indigo-600 transition duration-300">
                     Chọn Ảnh Tải Lên
                 </label>
-                <input type="file" id="fileInput" accept="image/*" onchange="previewImage(event)">
-                <p class="text-sm text-gray-500">Tải lên ảnh định dạng JPG hoặc PNG.</p>
+                <input type="file" id="fileInput" accept="image/*">
+                <p class="text-sm text-gray-500">Tải lên ảnh định dạng JPG, JPEG hoặc PNG (tối đa 5MB).</p>
 
                 <!-- Xem trước ảnh gốc -->
                 <div id="originalImageContainer"
@@ -80,7 +99,7 @@
                 <label for="themeSelector" class="block text-xl font-bold text-gray-800">2. Chọn Chủ Đề Biến
                     Đổi:</label>
                 <select id="themeSelector"
-                    class="w-full p-3 border-2 border-gray-300 rounded-lg focus:ring-primary focus:border-primary transition duration-300 text-gray-700 bg-white shadow-sm">
+                    class="theme-select w-full p-3 border-2 border-gray-300 rounded-lg focus:ring-primary focus:border-primary transition duration-300 text-gray-700 bg-white shadow-sm">
                     <option value="" disabled selected>-- Chọn một phong cách --</option>
                     <option
                         value="Biến đổi hoàn toàn thành phong cách Giáng Sinh ấm áp, đầy tuyết và ánh đèn lung linh.">
@@ -111,8 +130,32 @@
                         Phong cách Anime 🎌</option>
                 </select>
 
+                <!-- API Key Input (Có thể ẩn đi nếu không muốn hiển thị) -->
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <label for="apiKey" class="block text-sm font-medium text-gray-700 mb-1">
+                                🔑 Nhập API Key của bạn:
+                            </label>
+                            <input type="password" id="apiKey" placeholder="Nhập Gemini API Key của bạn"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm">
+                            <p class="mt-1 text-sm text-gray-600">
+                                Lấy API key từ <a href="https://makersuite.google.com/app/apikey" target="_blank"
+                                    class="text-primary hover:underline">Google AI Studio</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Nút Xử lý -->
-                <button id="generateButton" onclick="generateTransformedImage()" disabled
+                <button id="generateButton"
                     class="w-full py-4 px-6 bg-secondary text-white font-bold rounded-xl shadow-xl hover:bg-emerald-600 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2">
                     <svg id="generateIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                         xmlns="http://www.w3.org/2000/svg">
@@ -155,238 +198,397 @@
 
             <!-- Nút Tải về -->
             <div class="text-center mt-6">
-                <button id="downloadButton" onclick="downloadImage()" disabled
+                <button id="downloadButton"
                     class="py-3 px-8 bg-primary text-white font-bold rounded-full shadow-lg hover:bg-indigo-600 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
                     Tải Ảnh Về
                 </button>
             </div>
         </div>
 
+        <!-- Footer với thông tin -->
+        <footer class="mt-10 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
+            <p>Trang web được tạo bởi Nguyễn Hữu Duy.</p>
+            <!-- <p class="mt-1">Cần API key? Truy cập <a href="https://makersuite.google.com/app/apikey" target="_blank"
+                    class="text-primary hover:underline">Google AI Studio</a> để tạo miễn phí.</p> -->
+        </footer>
+
     </div>
 
-    <script type="module">
-        // Khai báo biến toàn cục từ môi trường Canvas (BẮT BUỘC)
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const apiKey = ""; // API key được cung cấp tự động bởi Canvas
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
-
+    <script>
+        // ========== CẤU HÌNH ==========
+        const GEMINI_MODEL = 'gemini-1.5-flash'; // Có thể đổi thành 'gemini-pro' hoặc 'gemini-1.5-pro'
+        const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+        
+        // ========== BIẾN TOÀN CỤC ==========
         let base64Image = null;
+        let currentTransformedImageUrl = null;
+        let currentApiKey = '';
 
-        // --- HÀM XỬ LÝ GIAO DIỆN VÀ FILE ---
+        // ========== KHỞI TẠO ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Frontend đã sẵn sàng');
+            
+            // Gán sự kiện
+            document.getElementById('fileInput').addEventListener('change', previewImage);
+            document.getElementById('themeSelector').addEventListener('change', checkReadyToGenerate);
+            document.getElementById('apiKey').addEventListener('input', checkReadyToGenerate);
+            document.getElementById('generateButton').addEventListener('click', generateTransformedImage);
+            document.getElementById('downloadButton').addEventListener('click', downloadImage);
+            
+            // Kiểm tra xem có lưu API key trong localStorage không
+            const savedApiKey = localStorage.getItem('gemini_api_key');
+            if (savedApiKey) {
+                document.getElementById('apiKey').value = savedApiKey;
+                currentApiKey = savedApiKey;
+                checkReadyToGenerate();
+                showMessage("Đã tải API key từ bộ nhớ. Bạn có thể bắt đầu sử dụng!", 'bg-green-100 text-green-800');
+            }
+        });
 
-        /**
-         * Chuyển đổi file ảnh đã chọn thành Base64 để gửi lên API.
-         * @param {Event} event Sự kiện thay đổi của input file.
-         */
-        window.previewImage = function (event) {
+        // ========== XỬ LÝ FILE UPLOAD ==========
+        function previewImage(event) {
             const file = event.target.files[0];
             const originalImage = document.getElementById('originalImage');
             const originalImageContainer = document.getElementById('originalImageContainer');
             const generateButton = document.getElementById('generateButton');
 
-            base64Image = null; // Reset Base64
+            base64Image = null;
 
             if (file) {
+                // Kiểm tra kích thước file (max 5MB để tránh lỗi)
+                if (file.size > 5 * 1024 * 1024) {
+                    showMessage("⚠️ Ảnh quá lớn! Vui lòng chọn ảnh dưới 5MB.", 'bg-red-100 text-red-800');
+                    event.target.value = '';
+                    return;
+                }
+
+                // Kiểm tra định dạng
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                if (!validTypes.includes(file.type)) {
+                    showMessage("❌ Chỉ chấp nhận ảnh JPG, JPEG hoặc PNG.", 'bg-red-100 text-red-800');
+                    event.target.value = '';
+                    return;
+                }
+
                 const reader = new FileReader();
-                reader.onload = function (e) {
-                    // Cập nhật ảnh xem trước
+                reader.onload = function(e) {
                     originalImage.src = e.target.result;
                     originalImageContainer.style.display = 'block';
 
-                    // Lấy phần Base64 data (sau dấu phẩy)
+                    // Lấy Base64 data
                     const base64Data = e.target.result.split(',')[1];
                     const mimeType = file.type;
 
                     if (base64Data) {
                         base64Image = {
                             mimeType: mimeType,
-                            data: base64Data
+                            data: base64Data,
+                            fileName: file.name
                         };
-                        // Kích hoạt nút tạo ảnh nếu đã có ảnh và đã chọn chủ đề
                         checkReadyToGenerate();
-                    } else {
-                        showMessage("Lỗi: Không thể đọc dữ liệu ảnh Base64.", 'bg-red-100 text-red-800');
-                        generateButton.disabled = true;
+                        showMessage("✅ Đã tải ảnh thành công! Chọn chủ đề và nhập API key để tiếp tục.", 'bg-green-100 text-green-800');
                     }
+                };
+                reader.onerror = function() {
+                    showMessage("❌ Lỗi khi đọc file. Vui lòng thử lại.", 'bg-red-100 text-red-800');
                 };
                 reader.readAsDataURL(file);
             } else {
                 originalImage.src = '';
                 originalImageContainer.style.display = 'none';
                 generateButton.disabled = true;
+                showMessage("", 'bg-blue-100 text-blue-800');
             }
-        };
+        }
 
-        // Lắng nghe sự kiện thay đổi của selector để kích hoạt nút tạo ảnh
-        document.getElementById('themeSelector').addEventListener('change', checkReadyToGenerate);
-
-        /**
-         * Kiểm tra điều kiện để kích hoạt nút tạo ảnh.
-         */
+        // ========== KIỂM TRA ĐIỀU KIỆN ==========
         function checkReadyToGenerate() {
             const theme = document.getElementById('themeSelector').value;
+            const apiKeyInput = document.getElementById('apiKey').value;
             const generateButton = document.getElementById('generateButton');
-            if (base64Image && theme) {
+            
+            // Lưu API key vào biến và localStorage
+            if (apiKeyInput && apiKeyInput !== currentApiKey) {
+                currentApiKey = apiKeyInput;
+                localStorage.setItem('gemini_api_key', apiKeyInput);
+            }
+            
+            if (base64Image && theme && currentApiKey) {
                 generateButton.disabled = false;
+                generateButton.classList.remove('disabled:opacity-50', 'disabled:cursor-not-allowed');
             } else {
                 generateButton.disabled = true;
+                generateButton.classList.add('disabled:opacity-50', 'disabled:cursor-not-allowed');
             }
         }
 
-        /**
-         * Hiển thị thông báo.
-         * @param {string} message Nội dung thông báo.
-         * @param {string} classes Lớp CSS cho màu sắc/nền.
-         */
+        // ========== HIỂN THỊ THÔNG BÁO ==========
         function showMessage(message, classes = 'bg-blue-100 text-blue-800') {
             const box = document.getElementById('messageBox');
+            if (!box) return;
+            
             box.textContent = message;
             box.className = `text-center p-4 rounded-lg mb-4 ${classes}`;
-            box.style.display = 'block';
+            box.style.display = message ? 'block' : 'none';
+            
+            // Tự động ẩn thông báo sau 5 giây (trừ lỗi)
+            if (message && !classes.includes('red')) {
+                setTimeout(() => {
+                    if (box.textContent === message) {
+                        box.style.display = 'none';
+                    }
+                }, 5000);
+            }
         }
 
-        /**
-         * Cập nhật trạng thái loading.
-         * @param {boolean} isLoading Trạng thái loading (true/false).
-         */
+        // ========== XỬ LÝ LOADING ==========
         function setLoading(isLoading) {
             const generateButton = document.getElementById('generateButton');
             const generateText = document.getElementById('generateText');
             const generateIcon = document.getElementById('generateIcon');
             const loadingSpinner = document.getElementById('loadingSpinner');
+            const downloadButton = document.getElementById('downloadButton');
 
-            generateButton.disabled = isLoading;
             if (isLoading) {
+                // Bắt đầu loading
+                generateButton.disabled = true;
                 generateText.textContent = 'Đang Xử Lý...';
                 generateIcon.style.display = 'none';
                 loadingSpinner.style.display = 'inline-block';
-                generateButton.classList.remove('bg-secondary', 'hover:bg-emerald-600');
-                generateButton.classList.add('bg-gray-500');
-                showMessage("Đang gửi yêu cầu đến AI để tạo ảnh. Quá trình này có thể mất vài giây...", 'bg-yellow-100 text-yellow-800');
+                downloadButton.disabled = true;
+                showMessage("⏳ Đang gửi yêu cầu đến Gemini AI... Quá trình có thể mất 15-30 giây.", 'bg-yellow-100 text-yellow-800');
             } else {
+                // Kết thúc loading
                 generateText.textContent = 'Tạo Ảnh Biến Đổi';
                 generateIcon.style.display = 'inline-block';
                 loadingSpinner.style.display = 'none';
-                generateButton.classList.add('bg-secondary', 'hover:bg-emerald-600');
-                generateButton.classList.remove('bg-gray-500');
+                checkReadyToGenerate();
             }
         }
 
-        // --- HÀM GỌI API GEMINI ---
-
-        /**
-         * Thực hiện cuộc gọi API để chuyển đổi ảnh.
-         */
-        window.generateTransformedImage = async function () {
+        // ========== GỬI YÊU CẦU ĐẾN GEMINI API ==========
+        async function generateTransformedImage() {
             if (!base64Image) {
-                showMessage("Vui lòng tải lên một ảnh trước.", 'bg-red-100 text-red-800');
+                showMessage("❌ Vui lòng tải lên ảnh trước.", 'bg-red-100 text-red-800');
                 return;
             }
 
             const themePrompt = document.getElementById('themeSelector').value;
             if (!themePrompt) {
-                showMessage("Vui lòng chọn một chủ đề biến đổi.", 'bg-red-100 text-red-800');
+                showMessage("❌ Vui lòng chọn chủ đề.", 'bg-red-100 text-red-800');
+                return;
+            }
+
+            if (!currentApiKey) {
+                showMessage("❌ Vui lòng nhập API key của bạn.", 'bg-red-100 text-red-800');
                 return;
             }
 
             setLoading(true);
+            
+            // Reset ảnh cũ
+            const transformedImage = document.getElementById('transformedImage');
+            const placeholderText = document.getElementById('placeholderText');
+            transformedImage.style.display = 'none';
+            placeholderText.style.display = 'block';
             document.getElementById('downloadButton').disabled = true;
-            document.getElementById('transformedImage').style.display = 'none';
-            document.getElementById('placeholderText').style.display = 'block';
+            
+            // Xóa URL cũ nếu có
+            if (currentTransformedImageUrl) {
+                URL.revokeObjectURL(currentTransformedImageUrl);
+                currentTransformedImageUrl = null;
+            }
 
-            // Xây dựng prompt để hướng dẫn mô hình AI chuyển đổi ảnh
-            const userPrompt = `Dựa trên ảnh đã cung cấp, hãy biến đổi ảnh ĐẦY ĐỦ và HOÀN TOÀN thành phong cách sau. ${themePrompt}. Đảm bảo chất lượng nghệ thuật cao, chi tiết, và giữ lại bố cục tổng thể của ảnh gốc nhưng áp dụng triệt để phong cách mới.`;
+            try {
+                console.log('🔄 Đang gửi request đến Gemini API...');
+                
+                // Prompt tối ưu cho Gemini
+                const userPrompt = `Bạn là một nghệ sĩ AI chuyên nghiệp. Hãy biến đổi hoàn toàn ảnh này theo phong cách sau: ${themePrompt}
+                
+                YÊU CẦU:
+                1. Giữ nguyên bố cục chính và chủ thể của ảnh gốc
+                2. Áp dụng phong cách mới một cách triệt để và sáng tạo
+                3. Đảm bảo chất lượng hình ảnh cao, chi tiết rõ ràng
+                4. Không thêm watermark, chữ ký hay text
+                5. Tạo ra một tác phẩm nghệ thuật độc đáo và đẹp mắt
+                
+                Hãy tạo ra hình ảnh biến đổi với chất lượng cao nhất có thể.`;
 
-            const payload = {
-                contents: [{
-                    parts: [
-                        { text: userPrompt }, // Prompt mô tả việc chuyển đổi
-                        { inlineData: base64Image } // Dữ liệu ảnh đầu vào
-                    ]
-                }],
-                generationConfig: {
-                    responseModalities: ['TEXT', 'IMAGE'] // Yêu cầu trả về cả văn bản (mặc định) và hình ảnh
-                },
-                // Model: gemini-2.5-flash-image-preview
-            };
-
-            // Hàm retry với exponential backoff
-            const maxRetries = 3;
-            let lastError = null;
-
-            for (let attempt = 0; attempt < maxRetries; attempt++) {
-                try {
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) {
-                        // FIX: Loại bỏ ký tự escape không cần thiết trong template literal
-                        throw new Error(`Lỗi HTTP: ${response.status}`);
+                const apiUrl = `${GEMINI_API_BASE}/${GEMINI_MODEL}:generateContent?key=${currentApiKey}`;
+                
+                const payload = {
+                    contents: [{
+                        parts: [
+                            { text: userPrompt },
+                            { 
+                                inlineData: {
+                                    mimeType: base64Image.mimeType,
+                                    data: base64Image.data
+                                }
+                            }
+                        ]
+                    }],
+                    generationConfig: {
+                        temperature: 0.7,
+                        topP: 0.8,
+                        topK: 40,
+                        maxOutputTokens: 2048
                     }
+                };
 
-                    const result = await response.json();
+                console.log('📤 Gửi payload đến:', apiUrl);
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
 
-                    const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
-
-                    if (base64Data) {
-                        // FIX: Loại bỏ ký tự escape không cần thiết trong template literal
-                        const imageUrl = `data:image/png;base64,${base64Data}`;
-                        const transformedImage = document.getElementById('transformedImage');
-
-                        // Hiển thị ảnh kết quả
-                        transformedImage.src = imageUrl;
-                        transformedImage.style.display = 'block';
-                        document.getElementById('placeholderText').style.display = 'none';
-                        document.getElementById('downloadButton').disabled = false;
-                        showMessage("✅ Chuyển đổi thành công! Ảnh đã sẵn sàng.", 'bg-green-100 text-green-800');
-                        break; // Thành công, thoát vòng lặp
-                    } else {
-                        // Trường hợp API trả về thành công nhưng không có ảnh (hiếm)
-                        throw new Error("API không trả về dữ liệu ảnh hợp lệ.");
+                console.log(`📊 Response status: ${response.status}`);
+                
+                // Xử lý response
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    let errorMessage = `Lỗi ${response.status}: ${errorText.substring(0, 200)}`;
+                    
+                    // Xử lý các lỗi phổ biến
+                    if (response.status === 400) {
+                        errorMessage = "Lỗi request. Kiểm tra lại API key và định dạng ảnh.";
+                    } else if (response.status === 403) {
+                        errorMessage = "API key không hợp lệ hoặc không có quyền truy cập.";
+                    } else if (response.status === 429) {
+                        errorMessage = "Đã hết lượt sử dụng API miễn phí. Vui lòng thử lại sau hoặc dùng API key khác.";
+                    } else if (response.status === 500) {
+                        errorMessage = "Lỗi server từ Google. Vui lòng thử lại sau.";
                     }
+                    
+                    throw new Error(errorMessage);
+                }
 
-                } catch (error) {
-                    lastError = error;
-                    console.error(`Thử lại lần ${attempt + 1} thất bại:`, error);
-                    if (attempt < maxRetries - 1) {
-                        const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
-                        await new Promise(resolve => setTimeout(resolve, delay));
+                const result = await response.json();
+                console.log('📄 Response data nhận được');
+                
+                // Xử lý response từ Gemini
+                // Gemini có thể trả về text hoặc cả text và image
+                const candidates = result.candidates;
+                if (!candidates || candidates.length === 0) {
+                    throw new Error("Không nhận được kết quả từ AI.");
+                }
+
+                const parts = candidates[0].content.parts;
+                let generatedText = '';
+                let imageBase64 = null;
+
+                // Tìm text và image trong response
+                for (const part of parts) {
+                    if (part.text) {
+                        generatedText = part.text;
+                    }
+                    if (part.inlineData) {
+                        imageBase64 = part.inlineData.data;
                     }
                 }
+
+                // Nếu có ảnh trong response
+                if (imageBase64) {
+                    const imageUrl = `data:image/png;base64,${imageBase64}`;
+                    currentTransformedImageUrl = imageUrl;
+                    
+                    // Hiển thị ảnh
+                    transformedImage.onload = function() {
+                        console.log('✅ Ảnh đã load thành công');
+                    };
+                    transformedImage.onerror = function() {
+                        console.error('❌ Lỗi khi load ảnh');
+                        showMessage("Lỗi khi hiển thị ảnh kết quả.", 'bg-red-100 text-red-800');
+                    };
+                    
+                    transformedImage.src = imageUrl;
+                    transformedImage.style.display = 'block';
+                    placeholderText.style.display = 'none';
+                    document.getElementById('downloadButton').disabled = false;
+                    
+                    showMessage("✅ Tạo ảnh thành công! Bạn có thể tải về.", 'bg-green-100 text-green-800');
+                    
+                    // Hiển thị mô tả nếu có
+                    if (generatedText) {
+                        console.log('📝 AI mô tả:', generatedText);
+                    }
+                } 
+                // Nếu chỉ có text (một số model chỉ trả về text)
+                else if (generatedText) {
+                    console.log('📝 AI trả về text:', generatedText);
+                    showMessage(`⚠️ Model này chỉ trả về text: "${generatedText.substring(0, 100)}..."`, 'bg-yellow-100 text-yellow-800');
+                    showMessage("💡 Thử đổi model trong code thành 'gemini-1.5-pro' hoặc 'gemini-pro-vision'", 'bg-blue-100 text-blue-800');
+                } 
+                else {
+                    throw new Error("API không trả về ảnh hoặc text. Có thể model không hỗ trợ tạo ảnh.");
+                }
+
+            } catch (error) {
+                console.error('❌ Lỗi khi tạo ảnh:', error);
+                
+                let errorMessage = error.message;
+                
+                // Gợi ý giải pháp cho các lỗi phổ biến
+                if (errorMessage.includes('hết lượt') || errorMessage.includes('quota')) {
+                    errorMessage += "\n💡 Lấy API key mới tại: https://makersuite.google.com/app/apikey";
+                } else if (errorMessage.includes('API key')) {
+                    errorMessage += "\n💡 Kiểm tra lại API key hoặc tạo mới";
+                } else if (errorMessage.includes('model')) {
+                    errorMessage += "\n💡 Thử đổi model trong code (dòng const GEMINI_MODEL)";
+                }
+                
+                showMessage(`❌ ${errorMessage}`, 'bg-red-100 text-red-800');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // ========== TẢI ẢNH VỀ ==========
+        function downloadImage() {
+            if (!currentTransformedImageUrl) {
+                showMessage("❌ Không có ảnh để tải về.", 'bg-red-100 text-red-800');
+                return;
             }
 
-            setLoading(false);
-
-            if (lastError && document.getElementById('transformedImage').style.display === 'none') {
-                // FIX: Loại bỏ ký tự escape không cần thiết trong template literal
-                showMessage(`Lỗi trong quá trình tạo ảnh. Vui lòng thử lại. Chi tiết: ${lastError.message || 'Không rõ lỗi.'}`, 'bg-red-100 text-red-800');
-            }
-        };
-
-        // --- HÀM TẢI ẢNH XUỐNG ---
-
-        /**
-         * Tải ảnh đã được chuyển đổi về máy.
-         */
-        window.downloadImage = function () {
-            const imageElement = document.getElementById('transformedImage');
-            const imageUrl = imageElement.src;
-
-            if (imageUrl && imageUrl !== '#') {
+            try {
                 const link = document.createElement('a');
-                link.href = imageUrl;
-                // Đặt tên file tải về
-                link.download = 'anh-chuyen-doi-gemini.png';
+                link.href = currentTransformedImageUrl;
+                
+                // Tạo tên file với timestamp
+                const timestamp = new Date().getTime();
+                const theme = document.getElementById('themeSelector').options[document.getElementById('themeSelector').selectedIndex].text;
+                const safeTheme = theme.replace(/[^\w\s]/gi, '').substring(0, 20);
+                link.download = `anh-bien-doi-${safeTheme}-${timestamp}.png`;
+                
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-            } else {
-                showMessage("Không có ảnh để tải về. Vui lòng tạo ảnh trước.", 'bg-red-100 text-red-800');
+                
+                showMessage("✅ Đang tải ảnh về... Kiểm tra thư mục Downloads của bạn.", 'bg-green-100 text-green-800');
+            } catch (error) {
+                console.error('Lỗi khi tải ảnh:', error);
+                showMessage("❌ Lỗi khi tải ảnh. Vui lòng thử lại.", 'bg-red-100 text-red-800');
             }
-        };
+        }
+
+        // ========== HÀM TRỢ GIÚP ==========
+        function clearApiKey() {
+            localStorage.removeItem('gemini_api_key');
+            document.getElementById('apiKey').value = '';
+            currentApiKey = '';
+            checkReadyToGenerate();
+            showMessage("✅ Đã xóa API key khỏi bộ nhớ.", 'bg-green-100 text-green-800');
+        }
+
+        // ========== GÁN HÀM VÀO WINDOW ==========
+        window.previewImage = previewImage;
+        window.generateTransformedImage = generateTransformedImage;
+        window.downloadImage = downloadImage;
+        window.clearApiKey = clearApiKey;
     </script>
 </body>
 
